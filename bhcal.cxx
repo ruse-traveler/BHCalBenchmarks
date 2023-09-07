@@ -46,7 +46,7 @@ int bhcal(std::string file) {
   const tuple<int, double, double> multBins = make_tuple(100, 0.,   100.);
 
   // histogram definitions
-  const std::vector<RDF::TH1DModel> vecHistDefs1D = {
+  const vector<RDF::TH1DModel> vecHistDefs1D = {
     RDF::TH1DModel("hEneHit",         "", get<0>(eneBins),  get<1>(eneBins),  get<2>(eneBins)),
     RDF::TH1DModel("hEneClust",       "", get<0>(eneBins),  get<1>(eneBins),  get<2>(eneBins)),
     RDF::TH1DModel("hEneLead",        "", get<0>(eneBins),  get<1>(eneBins),  get<2>(eneBins)),
@@ -59,7 +59,7 @@ int bhcal(std::string file) {
     RDF::TH1DModel("hMultClust",      "", get<0>(multBins), get<1>(multBins), get<2>(multBins)),
     RDF::TH1DModel("hMultHitInClust", "", get<0>(multBins), get<2>(multBins), get<2>(multBins))
   };
-  const std::vector<RDF::TH2DModel> vecHistDefs2D = {
+  const vector<RDF::TH2DModel> vecHistDefs2D = {
     RDF::TH2DModel("hEneDiffClustVsParticle", "", get<0>(eneBins),  get<1>(eneBins),  get<2>(eneBins),  get<0>(diffBins), get<1>(diffBins), get<2>(diffBins)),
     RDF::TH2DModel("hEneDiffLeadVsParticle",  "", get<0>(eneBins),  get<1>(eneBins),  get<2>(eneBins),  get<0>(diffBins), get<1>(diffBins), get<2>(diffBins)),
     RDF::TH2DModel("hEneDiffSumVsParticle",   "", get<0>(eneBins),  get<1>(eneBins),  get<2>(eneBins),  get<0>(diffBins), get<1>(diffBins), get<2>(diffBins)),
