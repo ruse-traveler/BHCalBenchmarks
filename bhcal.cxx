@@ -58,7 +58,8 @@ int bhcal(std::string file) {
     assert(events > 0);
   }
 
-  // lambdas
+  // lambdas for analysis -----------------------------------------------------
+
   auto getParticleEnergy = [](const RVec<int> &types, const RVec<float> &energies) {
     float    energy = -1;
     uint64_t index  = 0;
@@ -106,10 +107,47 @@ int bhcal(std::string file) {
     return a / (a + b);
   };
 
-  // TODO make into template
+  // TODO template input vector
   auto getMultiplicity = [](const RVec<float> &collection) {
     return collection.size();
   };
+
+  // define histograms --------------------------------------------------------
+
+  // histogram titles
+  const string eneTitle       = ";E [GeV];counts";
+  const string diffTitle      = ";(E_{reco} - E_{par}) / E_{par};counts";
+  const string multTitle      = ";multiplicity;counts";
+  const string diffCvsPTitle  = ";E_{par} [GeV];E_{clust} [GeV];counts";
+  const string diffLvsPTitle  = ";E_{par} [GeV];E_{clust}^{lead} [GeV];counts";
+  const string diffSvsPTitle  = ";E_{par} [GeV];#SigmaE_{clust} [GeV];counts";
+  const string sumVsFracTitle = ";#SigmaE_{BECal} / (#SigmaE_{BECal} + #SigmaE_{BHCal});#SigmaE_{BECal};counts";
+
+  // histogram binning
+  const tuple<int, double, double> eneBins  = make_tuple(200, 0.,   100.);
+  const tuple<int, double, double> diffBins = make_tuple(200, -10., 10.);
+  const tuple<int, double, double> fracBins = make_tuple(100, 0.,   10.);
+  const tuple<int, double, double> multBins = make_tuple(100, 0.,   100.);
+
+  // histogram definitions
+  const vector<TH1Def> vecHistDefs1D = {
+    TH1Def("hEnePar",         eneTitle.data(),  get<0>(eneBins),  get<1>(eneBins),  get<2>(eneBins)),
+    TH1Def("hEneHit",         eneTitle.data(),  get<0>(eneBins),  get<1>(eneBins),  get<2>(eneBins)),
+    TH1Def("hEneClust",       eneTitle.data(),  get<0>(eneBins),  get<1>(eneBins),  get<2>(eneBins)),
+    TH1Def("hEneLead",        eneTitle.data(),  get<0>(eneBins),  get<1>(eneBins),  get<2>(eneBins)),
+    TH1Def("hEneSum",         eneTitle.data(),  get<0>(eneBins),  get<1>(eneBins),  get<2>(eneBins)),
+    TH1Def("hDiffClust",      diffTitle.data(), get<0>(diffBins), get<1>(diffBins), get<2>(diffBins)),
+    TH1Def("hDiffLead",       diffTitle.data(), get<0>(diffBins), get<1>(diffBins), get<2>(diffBins)),
+    TH1Def("hDiffSum",        diffTitle.data(), get<0>(diffBins), get<1>(diffBins), get<2>(diffBins)),
+    TH1Def("hMultHit",        multTitle.data(), get<0>(multBins), get<1>(multBins), get<2>(multBins)),
+    TH1Def("hMultClust",      multTitle.data(), get<0>(multBins), get<1>(multBins), get<2>(multBins)),
+    TH1Def("hMultHitInClust", multTitle.data(), get<0>(multBins), get<2>(multBins), get<2>(multBins))
+  };
+  const vector<TH2Def> vecHistDefs2D = {
+    TH2Def("hSumVsFrac", sumVsFracTitle.data(), get<0>(fracBins), get<1>(fracBins), get<2>(fracBins), get<0>(diffBins), get<1>(diffBins), get<1>(diffBins))
+  };
+
+  // run analysis -------------------------------------------------------------
 
   // define columns
   auto analysis = frame.Define("enePar",        getParticleEnergy, {"GeneratedParticles.type", "GeneratedParticles.energy"})
@@ -123,35 +161,9 @@ int bhcal(std::string file) {
                        .Define("multHit",       getMultiplicity,   {"HcalBarrelRecHits.energy"})
                        .Define("multClust",     getMultiplicity,   {"HcalBarrelClusters.energy"});
 
-  // histogram binning
-  const tuple<int, double, double> eneBins  = make_tuple(200, 0.,   100.);
-  const tuple<int, double, double> diffBins = make_tuple(200, -10., 10.);
-  const tuple<int, double, double> fracBins = make_tuple(100, 0.,   10.);
-  const tuple<int, double, double> multBins = make_tuple(100, 0.,   100.);
-
-  // histogram definitions
-  const vector<TH1Def> vecHistDefs1D = {
-    TH1Def("hEneHit",         "", get<0>(eneBins),  get<1>(eneBins),  get<2>(eneBins)),
-    TH1Def("hEneClust",       "", get<0>(eneBins),  get<1>(eneBins),  get<2>(eneBins)),
-    TH1Def("hEneLead",        "", get<0>(eneBins),  get<1>(eneBins),  get<2>(eneBins)),
-    TH1Def("hEneSum",         "", get<0>(eneBins),  get<1>(eneBins),  get<2>(eneBins)),
-    TH1Def("hDiffClust",      "", get<0>(diffBins), get<1>(diffBins), get<2>(diffBins)),
-    TH1Def("hDiffLead",       "", get<0>(diffBins), get<1>(diffBins), get<2>(diffBins)),
-    TH1Def("hDiffSum",        "", get<0>(diffBins), get<1>(diffBins), get<2>(diffBins)),
-    TH1Def("hFracBHxECal",    "", get<0>(fracBins), get<1>(fracBins), get<2>(fracBins)),
-    TH1Def("hMultHit",        "", get<0>(multBins), get<1>(multBins), get<2>(multBins)),
-    TH1Def("hMultClust",      "", get<0>(multBins), get<1>(multBins), get<2>(multBins)),
-    TH1Def("hMultHitInClust", "", get<0>(multBins), get<2>(multBins), get<2>(multBins))
-  };
-  const vector<TH2Def> vecHistDefs2D = {
-    TH2Def("hEneDiffClustVsParticle", "", get<0>(eneBins),  get<1>(eneBins),  get<2>(eneBins),  get<0>(diffBins), get<1>(diffBins), get<2>(diffBins)),
-    TH2Def("hEneDiffLeadVsParticle",  "", get<0>(eneBins),  get<1>(eneBins),  get<2>(eneBins),  get<0>(diffBins), get<1>(diffBins), get<2>(diffBins)),
-    TH2Def("hEneDiffSumVsParticle",   "", get<0>(eneBins),  get<1>(eneBins),  get<2>(eneBins),  get<0>(diffBins), get<1>(diffBins), get<2>(diffBins)),
-    TH2Def("hEneDiffVsFracBHxECal",   "", get<0>(fracBins), get<1>(fracBins), get<2>(fracBins), get<0>(diffBins), get<1>(diffBins), get<1>(diffBins))
-  };
-
   // get 1D histograms
-  // TODO collect into vector
+  //   TODO it might be nice to collect these into a vector
+  //   and automate histogram operations...
   auto hEnePar         = analysis.Histo1D(vecHistDefs1D[0],  "enePar");
   auto hEneHit         = analysis.Histo1D(vecHistDefs1D[1],  "HcalBarrelRecHits.energy");
   auto hEneClust       = analysis.Histo1D(vecHistDefs1D[2],  "HcalBarrelClusters.energy");
@@ -160,19 +172,111 @@ int bhcal(std::string file) {
   auto hDiffClust      = analysis.Histo1D(vecHistDefs1D[5],  "diffClustHCal");
   auto hDiffLead       = analysis.Histo1D(vecHistDefs1D[6],  "diffLeadHCal");
   auto hDiffSum        = analysis.Histo1D(vecHistDefs1D[7],  "diffSumHCal");
-  auto hFracHxECal     = analysis.Histo1D(vecHistDefs1D[8],  "fracSumHxECal");
-  auto hMultHit        = analysis.Histo1D(vecHistDefs1D[9],  "multHit");
-  auto hMultClust      = analysis.Histo1D(vecHistDefs1D[10], "multClust");
-  auto hMultHitInClust = analysis.Histo1D(vecHistDefs1D[11], "HcalBarrelClusters.nhits");
+  auto hMultHit        = analysis.Histo1D(vecHistDefs1D[8],  "multHit");
+  auto hMultClust      = analysis.Histo1D(vecHistDefs1D[9],  "multClust");
+  auto hMultHitInClust = analysis.Histo1D(vecHistDefs1D[10], "HcalBarrelClusters.nhits");
 
   // get 2D histograms
-  // TODO collect into vector
-  auto hDiffClustVsParticle = analysis.Histo2D(vecHistDefs2D[0], "enePar",        "diffClustHCal");
-  auto hDiffLeadVsParticle  = analysis.Histo2D(vecHistDefs2D[1], "enePar",        "diffLeadHCal");
-  auto hDiffSumVsParticle   = analysis.Histo2D(vecHistDefs2D[2], "enePar",        "diffSumHCal");
-  auto hSumVsFracHxECal     = analysis.Histo2D(vecHistDefs2D[3], "fracSumHxECal", "eneSumHCal");
+  auto hSumVsFrac = analysis.Histo2D(vecHistDefs2D[0], "fracSumHxECal", "eneSumECal");
 
-  /* TODO make plots */
+  // make plots ---------------------------------------------------------------
+
+  // define styles
+  const tuple<uint32_t, uint32_t, uint32_t> stylePar     = {1,   1, 2};
+  const tuple<uint32_t, uint32_t, uint32_t> styleHit     = {633, 1, 2};
+  const tuple<uint32_t, uint32_t, uint32_t> styleClust   = {417, 1, 2};
+  const tuple<uint32_t, uint32_t, uint32_t> styleLead    = {601, 1, 2};
+  const tuple<uint32_t, uint32_t, uint32_t> styleSum     = {617, 1, 2};
+  const tuple<uint32_t, uint32_t, uint32_t> styleFrac    = {1,   1, 2};
+  const tuple<uint32_t, uint32_t, uint32_t> styleInClust = {601, 1, 2};
+
+  // set energy styles
+  hEnePar   -> SetLineColor(get<0>(stylePar));
+  hEnePar   -> SetLineStyle(get<1>(stylePar));
+  hEnePar   -> SetLineWidth(get<2>(stylePar));
+  hEneHit   -> SetLineColor(get<0>(styleHit));
+  hEneHit   -> SetLineStyle(get<1>(styleHit));
+  hEneHit   -> SetLineWidth(get<2>(styleHit));
+  hEneClust -> SetLineColor(get<0>(styleClust));
+  hEneClust -> SetLineStyle(get<1>(styleClust));
+  hEneClust -> SetLineWidth(get<2>(styleClust));
+  hEneLead  -> SetLineColor(get<0>(styleLead));
+  hEneLead  -> SetLineStyle(get<1>(styleLead));
+  hEneLead  -> SetLineWidth(get<2>(styleLead));
+  hEneSum   -> SetLineColor(get<0>(styleSum));
+  hEneSum   -> SetLineStyle(get<1>(styleSum));
+
+  // set difference styles
+  hDiffClust -> SetLineColor(get<0>(styleClust));
+  hDiffClust -> SetLineStyle(get<1>(styleClust));
+  hDiffClust -> SetLineWidth(get<2>(styleClust));
+  hDiffLead  -> SetLineColor(get<0>(styleLead));
+  hDiffLead  -> SetLineStyle(get<1>(styleLead));
+  hDiffLead  -> SetLineWidth(get<2>(styleLead));
+  hDiffSum   -> SetLineColor(get<0>(styleSum));
+  hDiffSum   -> SetLineStyle(get<1>(styleSum));
+  hDiffSum   -> SetLineWidth(get<2>(styleSum));
+
+  // set multiplicity style
+  hMultHit        -> SetLineColor(get<0>(styleHit));
+  hMultHit        -> SetLineStyle(get<1>(styleHit));
+  hMultHit        -> SetLineWidth(get<2>(styleHit));
+  hMultClust      -> SetLineColor(get<0>(styleClust));
+  hMultClust      -> SetLineStyle(get<1>(styleClust));
+  hMultClust      -> SetLineWidth(get<2>(styleClust));
+  hMultHitInClust -> SetLineColor(get<0>(styleInClust));
+  hMultHitInClust -> SetLineStyle(get<1>(styleInClust));
+  hMultHitInClust -> SetLineWidth(get<2>(styleInClust));
+
+  // canvas parameters
+  const uint32_t width  = 750;
+  const uint32_t height = 750;
+  const uint8_t  logY   = 1;
+  const uint8_t  logZ   = 1;
+
+  TCanvas *cEne = new TCanvas("cEne", "", width, height);
+  cEne      -> cd();
+  cEne      -> SetLogy(logY);
+  hEnePar   -> Draw();
+  hEneHit   -> Draw("same");
+  hEneClust -> Draw("same");
+  hEneLead  -> Draw("same");
+  hEneSum   -> Draw("same");
+  fOutput   -> cd();
+  cEne      -> Write();
+  cEne      -> Close();
+
+  TCanvas *cDiff = new TCanvas("cDiff", "", width, height);
+  cDiff      -> cd();
+  cDiff      -> SetLogy(logY);
+  hDiffClust -> Draw();
+  hDiffLead  -> Draw("same");
+  hDiffSum   -> Draw("same");
+  fOutput    -> cd();
+  cDiff      -> Write();
+  cDiff      -> Close();
+
+  TCanvas *cMult = new TCanvas("cMult", "", width, height);
+  cMult           -> cd();
+  cMult           -> SetLogy(logY);
+  hMultHit        -> Draw();
+  hMultClust      -> Draw("same");
+  hMultHitInClust -> Draw("same");
+  fOutput         -> cd();
+  cMult           -> Write();
+  cMult           -> Close();
+
+  TCanvas *cSumVsFrac = new TCanvas("cSumVsFrac", "", width, height);
+  cSumVsFrac -> cd();
+  cSumVsFrac -> SetLogz(logZ);
+  hSumVsFrac -> Draw("colz");
+  fOutput    -> cd();
+  cSumVsFrac -> Write();
+  cSumVsFrac -> Close();
+
+  // save output & exit -------------------------------------------------------
+
+  /* TODO saving goes here */
 
   // succesfully exit macro
   return 0;
