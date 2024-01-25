@@ -1,12 +1,12 @@
 // ----------------------------------------------------------------------------
-// 'bhcal.cxx'
+// 'hcal_barrel_clusters_analysis.cxx'
 // Derek Anderson
 // 09.07.2023
 //
 // ePIC BHCal benchmark macro.
 // ----------------------------------------------------------------------------
 
-// c utilities
+// c++ utilities
 #include <string>
 #include <vector>
 #include <utility>
@@ -30,8 +30,7 @@
 // misc
 #include "nlohmann/json.hpp"
 
-// make common namespaces implicit
-using namespace std;
+// make ROOT namespaces implicit
 using namespace ROOT;
 using namespace ROOT::VecOps; 
 
@@ -43,7 +42,7 @@ using TH2Def = ROOT::RDF::TH2DModel;
 
 // bhcal benchmarks -----------------------------------------------------------
 
-int bhcal(std::string file) {
+int hcal_barrel_clusters_analysis(std::string file) {
 
   // enable multithreading
   EnableImplicitMT(kNumThreads);
@@ -107,12 +106,14 @@ int bhcal(std::string file) {
     return a / (a + b);
   };
 
-  // TODO template input vector
   auto getMultiplicity = [](const RVec<float> &collection) {
     return collection.size();
   };
 
   // define histograms --------------------------------------------------------
+
+  // turn on histogram errors
+  TH1::SetDefaultSumw2(true);
 
   // histogram titles
   const string eneTitle       = ";E [GeV];counts";
