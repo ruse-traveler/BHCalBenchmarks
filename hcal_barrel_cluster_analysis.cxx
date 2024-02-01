@@ -12,6 +12,7 @@
 #include <utility>
 #include <cassert>
 #include <iostream>
+#include <optional>
 // root classes
 #include <TH1.h>
 #include <TH2.h>
@@ -37,6 +38,22 @@ using namespace ROOT::VecOps;
 // set up aliases
 using TH1Def = ROOT::RDF::TH1DModel;
 using TH2Def = ROOT::RDF::TH2DModel;
+
+
+
+// save canvas ----------------------------------------------------------------
+
+void save_canvas(TCanvas* canvas, std::optional<std::string> label = nullopt) {
+
+  if (label.has_value()) {
+    canvas -> SaveAs( fmt::format("results/{}.png", label).c_str() );
+    canvas -> SaveAs( fmt::format("results/{}.pdf", label).c_str() );
+  } else {
+    canvas -> SaveAs( fmt::format("results/{}.png", canvas -> GetName()).c_str() );
+    canvas -> SaveAs( fmt::format("results/{}.pdf", canvas -> GetName()).c_str() );
+  }
+
+}  // end 'save_canvas(TCanvas*, std::string)'
 
 
 
@@ -114,6 +131,7 @@ int hcal_barrel_clusters_analysis(std::string file) {
 
   // turn on histogram errors
   TH1::SetDefaultSumw2(true);
+  TH2::SetDefaultSumw2(true);
 
   // histogram titles
   const string eneTitle       = ";E [GeV];counts";
@@ -243,9 +261,6 @@ int hcal_barrel_clusters_analysis(std::string file) {
   hEneClust -> Draw("same");
   hEneLead  -> Draw("same");
   hEneSum   -> Draw("same");
-  fOutput   -> cd();
-  cEne      -> Write();
-  cEne      -> Close();
 
   TCanvas *cDiff = new TCanvas("cDiff", "", width, height);
   cDiff      -> cd();
@@ -253,9 +268,6 @@ int hcal_barrel_clusters_analysis(std::string file) {
   hDiffClust -> Draw();
   hDiffLead  -> Draw("same");
   hDiffSum   -> Draw("same");
-  fOutput    -> cd();
-  cDiff      -> Write();
-  cDiff      -> Close();
 
   TCanvas *cMult = new TCanvas("cMult", "", width, height);
   cMult           -> cd();
@@ -263,25 +275,26 @@ int hcal_barrel_clusters_analysis(std::string file) {
   hMultHit        -> Draw();
   hMultClust      -> Draw("same");
   hMultHitInClust -> Draw("same");
-  fOutput         -> cd();
-  cMult           -> Write();
-  cMult           -> Close();
 
   TCanvas *cSumVsFrac = new TCanvas("cSumVsFrac", "", width, height);
   cSumVsFrac -> cd();
   cSumVsFrac -> SetLogz(logZ);
   hSumVsFrac -> Draw("colz");
-  fOutput    -> cd();
-  cSumVsFrac -> Write();
+
+  // save & exit --------------------------------------------------------------
+
+  save_canvas(cEne);
+  save_canvas(cDiff);
+  save_canvas(cMult);
+  save_canvas(cSumVsFrac);
+  cEne       -> Close();
+  cDiff      -> Close();
+  cMult      -> Close();
   cSumVsFrac -> Close();
-
-  // save output & exit -------------------------------------------------------
-
-  /* TODO saving goes here */
 
   // succesfully exit macro
   return 0;
 
-}
+}  // end 'hcal_barrel_clusters_analysis(std::string)'
 
 // end ------------------------------------------------------------------------
