@@ -1,13 +1,13 @@
 // ----------------------------------------------------------------------------
-// 'test_bhcal.C'
+// 'hcal_barrel_cluster_analysis_standalone.cxx'
 // Derek Anderson
 // 09.07.2023
 //
-// for testing the ePIC BHCal benchmarks
+// for generating ePIC BHCal benchmarks
 // in a ROOT interactive session.
 // ----------------------------------------------------------------------------
 
-// c utilities
+// c++ utilities
 #include <string>
 #include <vector>
 #include <utility>
@@ -33,13 +33,16 @@ using TH2Def = ROOT::RDF::TH2DModel;
 
 
 
-// test bhcal benchmarks ------------------------------------------------------
+// bhcal benchmarks -----------------------------------------------------------
 
-int bhcal_test() {
+int hcal_barrel_cluster_analysis_standalone(
+  const string sInFile  = "./test/forTruthAssocTest.epic23090image.e10th45pip.podio.root",
+  const string sOutFile = "test.root"
+) {
 
-  // i/o parameters
-  const string sInFile  = "./test/forTruthAssocTest.epic23090image.e10th45pip.podio.root";
-  const string sOutFile = "test.root";
+  // turn on histogram errors
+  TH1::SetDefaultSumw2(true);
+  TH2::SetDefaultSumw2(true);
 
   // open output file
   TFile* fOutput = new TFile(sOutFile.data(), "recreate");
