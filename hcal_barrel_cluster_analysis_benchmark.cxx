@@ -1,5 +1,5 @@
 // ----------------------------------------------------------------------------
-// 'hcal_barrel_clusters_analysis.cxx'
+// 'hcal_barrel_clusters_analysis_benchmark.cxx'
 // Derek Anderson
 // 09.07.2023
 //
@@ -59,7 +59,11 @@ void save_canvas(TCanvas* canvas, std::optional<std::string> label = nullopt) {
 
 // bhcal benchmarks -----------------------------------------------------------
 
-int hcal_barrel_clusters_analysis(std::string file) {
+int hcal_barrel_clusters_analysis_benchmark(std::string file) {
+
+  // turn on histogram errors
+  TH1::SetDefaultSumw2(true);
+  TH2::SetDefaultSumw2(true);
 
   // enable multithreading
   EnableImplicitMT(kNumThreads);
